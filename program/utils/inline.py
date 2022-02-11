@@ -11,8 +11,8 @@ from pyrogram.types import (
 def stream_markup(user_id):
   buttons = [
     [
-      InlineKeyboardButton(text="• ʟᴜᴄᴋʏ", url=f"https://t.me/terayaarhoomai"),
-      InlineKeyboardButton(text="• ᴡᴏʀʟᴅ", url=f"https://t.me/Terayaarhoomai"),
+      InlineKeyboardButton(text="𓆩👑❛ 𝐋ᴜᴄᴋʏ", url=f"https://t.me/terayaarhoomai"),
+      InlineKeyboardButton(text="𝐖ᴏʀʟᴅ᭄ ❜👑𓆪⁩", url=f"https://t.me/Terayaarhoomai"),
     ],
   ]
   return buttons
