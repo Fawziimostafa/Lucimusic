@@ -233,10 +233,10 @@ async def play(c: Client, m: Message):
     else:
         if len(m.command) < 2:
             await m.reply(
-                "» reply to an **audio file** or **give something to search.**"
+                "» 🧐 **ᴡʜɪᴄʜ sᴏɴɢ ʏᴏᴜ ᴡᴀɴɴᴀ ᴘʟᴀʏ ??.**"
             )
         else:
-            suhu = await c.send_message(chat_id, "👅 **ᴄᴏɴɴᴇᴄᴛɪɴɢ ᴛᴏ ʟᴜᴄᴋʏ ꜱᴇʀᴠᴇʀ ʙᴀʙʏ 🤤**")
+            suhu = await c.send_message(chat_id, "👅 **⏱ `Bᴇᴇᴘ... Bᴏᴘ... Pʟᴀʏɪɴɢ`**")
             query = m.text.split(None, 1)[1]
             search = ytsearch(query)
             if search == 0:
