@@ -12,7 +12,7 @@ def changeImageSize(maxWidth, maxHeight, image):
     newImage = image.resize((newWidth, newHeight))
     return newImage
 
-async def thumb(thumbnail, title, userid, ctitle):
+async def gen_thumb(thumbnail, title, userid, theme, ctitle):
     async with aiohttp.ClientSession() as session:
         async with session.get(thumbnail) as resp:
             if resp.status == 200:
