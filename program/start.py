@@ -51,6 +51,8 @@ async def _human_time_duration(seconds):
     command(["start", f"start@{BOT_USERNAME}"]) & filters.private & ~filters.edited
 )
 async def start_(client: Client, message: Message):
+    await message.reply_photo(
+        photo=f"https://telegra.ph/file/b921645cc124c9d7acf7c.jpg",
     await message.reply_text(
         f"""**Hᴇʏ Hᴏᴛᴛɪᴇ Sʜᴏᴛᴛɪᴇ I Aᴍ A Mᴜsɪᴄ Sᴇʀᴠᴇʀ Fᴏʀ Yᴏᴜʀ Tᴇʟᴇɢʀᴀᴍ Vᴏɪᴄᴇ Cʜᴀᴛ & Cʜᴀɴɴᴇʟs 😉🌸 Usᴇ Mᴇ Hᴀʀᴅʟʏ & Eɴᴊᴏʏ Mᴜsɪᴄ Wɪᴛʜ Sᴜᴘᴇʀ Dᴜᴘᴇʀ Qᴜᴀʟɪᴛʏ 😈❣️
 Dᴇᴠᴇʟᴏᴘᴇᴅ Bʏ : [Lᴜᴄᴋʏ 𓆩👅𓆪](https://t.me/cute_boy701)**""",
@@ -58,16 +60,16 @@ Dᴇᴠᴇʟᴏᴘᴇᴅ Bʏ : [Lᴜᴄᴋʏ 𓆩👅𓆪](https://t.me/cute_boy
             [
                 [
                     InlineKeyboardButton(
-                        "🌸 ᴏᴡɴᴇʀ 🌸",
+                        "🦋 ᴏᴡɴᴇʀ 🦋",
                         url=f"https://t.me/cute_boy701",
                     )
                 ],
                 [
                     InlineKeyboardButton(
-                        "🦋 ʟᴜᴄᴋʏ ɢʀᴏᴜᴘ", url=f"https://t.me/{GROUP_SUPPORT}"
+                        "𓆩👑❛ 𝐋ᴜᴄᴋʏ", url=f"https://t.me/{GROUP_SUPPORT}"
                     ),
                     InlineKeyboardButton(
-                        "ʟᴜᴄᴋʏ ᴄʜᴀɴɴᴇʟ 🦋", url=f"https://t.me/{UPDATES_CHANNEL}"
+                        "𝐖ᴏʀʟᴅ᭄ ❜👑𓆪⁩", url=f"https://t.me/{UPDATES_CHANNEL}"
                     ),
                 ],
             ]
@@ -87,9 +89,9 @@ async def alive(client: Client, message: Message):
     keyboard = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("🦋 ʟᴜᴄᴋʏ ɢʀᴏᴜᴘ", url=f"https://t.me/{GROUP_SUPPORT}"),
+                InlineKeyboardButton("𓆩👑❛ 𝐋ᴜᴄᴋʏ", url=f"https://t.me/{GROUP_SUPPORT}"),
                 InlineKeyboardButton(
-                    "ʟᴜᴄᴋʏ ᴄʜᴀɴɴᴇʟ 🦋", url=f"https://t.me/{UPDATES_CHANNEL}"
+                    "𝐖ᴏʀʟᴅ᭄ ❜👑𓆪⁩", url=f"https://t.me/{UPDATES_CHANNEL}"
                 ),
             ]
         ]
