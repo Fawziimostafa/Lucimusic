@@ -4,6 +4,8 @@ import os
 import re
 import time
 import asyncio
+import traceback
+
 import lyricsgenius
 
 import aiofiles
@@ -19,16 +21,15 @@ from youtubesearchpython import VideosSearch
 from yt_dlp import YoutubeDL
 
 from config import BOT_USERNAME as bn
+from driver.decorators import check_blacklist
 from driver.filters import command, other_filters
 from driver.database.dbpunish import is_gbanned_user
+from driver.utils import remove_if_exists
 
 
 @Client.on_message(command(["song", f"song@{bn}"]) & ~filters.edited)
+@check_blacklist()
 async def song_downloader(_, message):
-    user_id = message.from_user.id
-    if await is_gbanned_user(user_id):
-        await message.reply("❗️ **You've blocked from using this bot!**")
-        return
     await message.delete()
     query = " ".join(message.command[1:])
     m = await message.reply("🔎 finding song...")
@@ -82,8 +83,8 @@ async def song_downloader(_, message):
         await m.edit("❌ error, wait for bot owner to fix")
         print(e)
     try:
-        os.remove(audio_file)
-        os.remove(thumb_name)
+        remove_if_exists(audio_file)
+        remove_if_exists(thumb_name)
     except Exception as e:
         print(e)
 
@@ -91,11 +92,8 @@ async def song_downloader(_, message):
 @Client.on_message(
     command(["vsong", f"vsong@{bn}", "video", f"video@{bn}"]) & ~filters.edited
 )
+@check_blacklist()
 async def video_downloader(_, message):
-    user_id = message.from_user.id
-    if await is_gbanned_user(user_id):
-        await message.reply_text("❗️ **You've blocked from using this bot!**")
-        return
     await message.delete()
     ydl_opts = {
         "format": "best",
@@ -126,6 +124,7 @@ async def video_downloader(_, message):
             ytdl_data = ytdl.extract_info(link, download=True)
             file_name = ytdl.prepare_filename(ytdl_data)
     except Exception as e:
+        traceback.print_exc()
         return await msg.edit(f"🚫 error: `{e}`")
     preview = wget.download(thumbnail)
     await msg.edit("📤 uploading video...")
@@ -136,18 +135,15 @@ async def video_downloader(_, message):
         caption=ytdl_data["title"],
     )
     try:
-        os.remove(file_name)
+        remove_if_exists(file_name)
         await msg.delete()
     except Exception as e:
         print(e)
 
 
 @Client.on_message(command(["lyric", f"lyric@{bn}", "lyrics"]))
+@check_blacklist()
 async def get_lyric_genius(_, message: Message):
-    user_id = message.from_user.id
-    if await is_gbanned_user(user_id):
-        await message.reply_text("❗️ **You've blocked from using this bot!**")
-        return
     if len(message.command) < 2:
         return await message.reply_text("**usage:**\n\n/lyrics (song name)")
     m = await message.reply_text("🔍 Searching lyrics...")
@@ -173,6 +169,6 @@ async def get_lyric_genius(_, message: Message):
             caption=f"**OUTPUT:**\n\n`attached lyrics text`",
             quote=False,
         )
-        os.remove(filename)
+        remove_if_exists(filename)
     else:
         await m.edit(xxx)
