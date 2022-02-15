@@ -2,8 +2,9 @@
 # Commit Start Date 20/10/2021
 # Finished On 28/10/2021
 
-import os
 # pyrogram stuff
+import traceback
+
 from pyrogram import Client
 from pyrogram.errors import UserAlreadyParticipant, UserNotParticipant
 from pyrogram.types import InlineKeyboardMarkup, Message
@@ -13,13 +14,14 @@ from pytgcalls import StreamType
 from pytgcalls.types.input_stream import AudioPiped
 from pytgcalls.types.input_stream.quality import HighQualityAudio
 # repository stuff
+from driver.decorators import require_admin, check_blacklist
 from program.utils.inline import stream_markup
 from driver.design.thumbnail import thumb
 from driver.design.chatname import CHAT_TITLE
 from driver.filters import command, other_filters
 from driver.queues import QUEUE, add_to_queue
 from driver.core import calls, user, bot
-from driver.utils import bash
+from driver.utils import bash, remove_if_exists
 from driver.database.dbpunish import is_gbanned_user
 from driver.database.dblockchat import blacklisted_chats
 from driver.database.dbqueue import add_active_chat, remove_active_chat, music_on
@@ -60,47 +62,17 @@ def convert_seconds(seconds):
 
 
 @Client.on_message(command(["play", f"play@{BOT_USERNAME}"]) & other_filters)
+@check_blacklist()
+@require_admin(permissions=["can_manage_voice_chats", "can_delete_messages", "can_invite_users"], self=True)
 async def play(c: Client, m: Message):
-    if chat_id in await blacklisted_chats():
-        await m.reply(
-            "❗️ This chat has blacklisted by sudo user and You're not allowed to use me in this chat."
-        )
-        return await bot.leave_chat(chat_id)
-    if await is_gbanned_user(user_id):
-        await m.reply_text(f"❗️ {user_xd} **You've blocked from using this bot!**")
-        return
+    await m.delete()
+    replied = m.reply_to_message
+    chat_id = m.chat.id
+    user_id = m.from_user.id
     if m.sender_chat:
         return await m.reply_text(
             "you're an __Anonymous__ user !\n\n» revert back to your real user account to use this bot."
         )
-    try:
-        aing = await c.get_me()
-    except Exception as e:
-        return await m.reply_text(f"error:\n\n{e}")
-    a = await c.get_chat_member(chat_id, aing.id)
-    if a.status != "administrator":
-        await m.reply_text(
-            f"💡 To use me, I need to be an **Administrator** with the following **permissions**:\n\n» ❌ __Delete messages__\n» ❌ __Invite users__\n» ❌ __Manage video chat__\n\nOnce done, type /reload"
-        )
-        return
-    if not a.can_manage_voice_chats:
-        await m.reply_text(
-            "💡 To use me, Give me the following permission below:"
-            + "\n\n» ❌ __Manage video chat__\n\nOnce done, try again."
-        )
-        return
-    if not a.can_delete_messages:
-        await m.reply_text(
-            "💡 To use me, Give me the following permission below:"
-            + "\n\n» ❌ __Delete messages__\n\nOnce done, try again."
-        )
-        return
-    if not a.can_invite_users:
-        await m.reply_text(
-            "💡 To use me, Give me the following permission below:"
-            + "\n\n» ❌ __Add users__\n\nOnce done, try again."
-        )
-        return
     try:
         ubot = (await user.get_me()).id
         b = await c.get_chat_member(chat_id, ubot)
@@ -131,6 +103,7 @@ async def play(c: Client, m: Message):
         except UserAlreadyParticipant:
             pass
         except Exception as e:
+            traceback.print_exc()
             return await m.reply_text(
                 f"❌ **userbot failed to join**\n\n**reason**: `{e}`"
             )
@@ -139,24 +112,29 @@ async def play(c: Client, m: Message):
             suhu = await replied.reply("📥 downloading audio...")
             dl = await replied.download()
             link = replied.link
+            songname = "Audio"
+            thumbnail = f"{IMG_5}"
             try:
                 if replied.audio:
-                    songname = replied.audio.title[:70]
-                    songname = replied.audio.file_name[:70]
+                    if replied.audio.title:
+                        songname = replied.audio.title[:70]
+                    else:
+                        songname = replied.audio.file_name[:70]
+                    if replied.audio.thumbs:
+                        thumbnail = await c.download_media(replied.audio.thumbs[0].file_id)
                     duration = convert_seconds(replied.audio.duration)
                 elif replied.voice:
                     songname = "Voice Note"
                     duration = convert_seconds(replied.voice.duration)
             except BaseException:
-                songname = "Audio"
-            
+                pass
+
             if chat_id in QUEUE:
                 await suhu.edit("🔄 Queueing Track...")
                 gcname = m.chat.title
                 ctitle = await CHAT_TITLE(gcname)
                 title = songname
                 userid = m.from_user.id
-                thumbnail = f"{IMG_5}"
                 image = await thumb(thumbnail, title, userid, ctitle)
                 pos = add_to_queue(chat_id, songname, dl, link, "Audio", 0)
                 requester = f"[{m.from_user.first_name}](tg://user?id={m.from_user.id})"
@@ -167,14 +145,13 @@ async def play(c: Client, m: Message):
                     reply_markup=InlineKeyboardMarkup(buttons),
                     caption=f"💡 **Track added to queue »** `{pos}`\n\n🗂 **Name:** [{songname}]({link}) | `music`\n⏱️ **Duration:** `{duration}`\n🧸 **Request by:** {requester}",
                 )
-                os.remove(image)
+                remove_if_exists(image)
             else:
                 try:
                     gcname = m.chat.title
                     ctitle = await CHAT_TITLE(gcname)
                     title = songname
                     userid = m.from_user.id
-                    thumbnail = f"{IMG_5}"
                     image = await thumb(thumbnail, title, userid, ctitle)
                     await suhu.edit("🔄 Joining Group Call...")
                     await music_on(chat_id)
@@ -199,10 +176,11 @@ async def play(c: Client, m: Message):
                         caption=f"🗂 **Name:** [{songname}]({link}) | `music`\n⏱️ **Duration:** `{duration}`\n🧸 **Request by:** {requester}",
                     )
                     await idle()
-                    os.remove(image)
+                    remove_if_exists(image)
                 except Exception as e:
                     await suhu.delete()
                     await remove_active_chat(chat_id)
+                    traceback.print_exc()
                     await m.reply_text(f"🚫 error:\n\n» {e}")
         else:
             if len(m.command) < 2:
@@ -242,7 +220,7 @@ async def play(c: Client, m: Message):
                                 reply_markup=InlineKeyboardMarkup(buttons),
                                 caption=f"💡 **Track added to queue »** `{pos}`\n\n🗂 **Name:** [{songname}]({url}) | `music`\n**⏱ Duration:** `{duration}`\n🧸 **Request by:** {requester}",
                             )
-                            os.remove(image)
+                            remove_if_exists(image)
                         else:
                             try:
                                 await suhu.edit("🔄 Joining Group Call...")
@@ -268,7 +246,7 @@ async def play(c: Client, m: Message):
                                     caption=f"🗂 **Name:** [{songname}]({url}) | `music`\n**⏱ Duration:** `{duration}`\n🧸 **Request by:** {requester}",
                                 )
                                 await idle()
-                                os.remove(image)
+                                remove_if_exists(image)
                             except Exception as ep:
                                 await suhu.delete()
                                 await remove_active_chat(chat_id)
@@ -310,7 +288,7 @@ async def play(c: Client, m: Message):
                             reply_markup=InlineKeyboardMarkup(buttons),
                             caption=f"💡 **Track added to queue »** `{pos}`\n\n🗂 **Name:** [{songname}]({url}) | `music`\n**⏱ Duration:** `{duration}`\n🧸 **Request by:** {requester}",
                         )
-                        os.remove(image)
+                        remove_if_exists(image)
                     else:
                         try:
                             await suhu.edit("🔄 Joining Group Call...")
@@ -334,7 +312,7 @@ async def play(c: Client, m: Message):
                                 caption=f"🗂 **Name:** [{songname}]({url}) | `music`\n**⏱ Duration:** `{duration}`\n🧸 **Request by:** {requester}",
                             )
                             await idle()
-                            os.remove(image)
+                            remove_if_exists(image)
                         except Exception as ep:
                             await suhu.delete()
                             await remove_active_chat(chat_id)
